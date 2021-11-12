@@ -155,11 +155,15 @@ print ("processing data .." )
 records = parse_data("data/Skin.txt")
 
 
+
+
+
 def dic2pd(retdict,tot):
     newlist = []
     for i in retdict:
         newlist.append({'itemset':i,'support':retdict[i]/tot})
     return pd.DataFrame.from_dict(newlist)
+>>>>>>> 73afca44aebefb85c20b63beb2afb270605f3573
 
 
 def closed_frequent(frequent):
@@ -271,27 +275,15 @@ def apriori_hash(records,sup):
 
 sthash = time() 
 k= apriori_hash(records,0.2)
-print ("hashing output ->", k)
+print (k)
 print (len(k))
 enhash = time()
 
 st = time()
 k= apriori(records,0.2)
-print ("without hashing output ->", k)
+print (k)
 print (len(k))
 en = time()
 
 print ("time with hashing: ",enhash-sthash)
 print ("time without hashing: ",en-st)
-
-
-from mlxtend.frequent_patterns import fpgrowth, apriori # fpgrowth, apriori library
-dataset = parse_data("data/Skin.txt")
-columns_, columns_mapping = column_names(dataset)
-array = convert_to_bool_df(dataset, columns_, columns_mapping)
-df = pd.DataFrame(array, columns=columns_)
-
-
-print("library output ->", apriori(df, 0.2))
-
-

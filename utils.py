@@ -11,8 +11,8 @@ def parse_data(file_name):
                 arr.append(int(i))
             except:
                 pass
-        barr.append(np.array(arr[::2])[:-1])
-#         barr.append(np.array(arr))
+#         barr.append(np.array(arr[::2])[:-1])
+        barr.append(np.array(arr))
     return np.array(barr)
     
 def closed_frequent(frequent):
