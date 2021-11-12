@@ -24,9 +24,7 @@ class Node(object):
         if parent is not None:
             parent.children[item] = self
 
-    def fine_path_from_root(self):
-        """ Returns the top-down sequence of items from self to
-            (but not including) the root node. """
+    def find_path_from_root(self):
         path = []
         if self.item is None:
             return path
@@ -51,7 +49,7 @@ class ConditionedFPTree(object):
         branches = []
         count = Dict(int)
         for node in self.nodes[cond_item]:
-            branch = node.fine_path_from_root()
+            branch = node.find_path_from_root()
             branches.append(branch)
             for item in branch:
                 count[item] += node.count

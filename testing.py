@@ -9,7 +9,6 @@ columns_, columns_mapping = column_names(dataset)
 array = convert_to_bool_df(dataset, columns_, columns_mapping)
 df = pd.DataFrame(array, columns=columns_)
 
-'''
 # Task 1: Apriori Library
 import time
 start_time = time.time()
@@ -67,5 +66,3 @@ frequent_itemsets = fpgrowth(df, min_support=0.2, merge=True)
 closed_frequent_itemsets = closed_frequent(frequent_itemsets)
 print('Time to find Close frequent itemset baseline with merging')
 print("--- %s seconds ---" % (time.time() - start_time))
-
-'''
