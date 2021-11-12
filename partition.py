@@ -200,11 +200,3 @@ def partition(records,n):
 
 
 
-
-
-print (partition(records,3))
-
-
-
-
-

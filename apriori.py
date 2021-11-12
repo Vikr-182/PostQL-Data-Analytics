@@ -65,17 +65,11 @@ def iterhash(records):
 
 def pruning(currset,prevset,lev):
     newdict = {}
-    
-    #print ("yaar ", set(prevset.keys()))
     for i in currset:
         iflag = True
         for subset in itertools.combinations(i,lev-1):
             if  subset not in list(prevset.keys()):
                 iflag = False 
-                #print (set(subset),"::::",lev,"::::",currset)
-                #print (set(prevset.keys()))
-                #print ("hua hi nahi yar")
-
 
         if iflag == True :
             newdict[i] = 0 
@@ -108,10 +102,25 @@ def itern(n,finalprev,records):
 
     return final
 
+from utils import *
+
+def parse_data(file_name):
+
+    file = open(file_name)
+    barr = []
+    for ind, line in enumerate(file):
+        arr = []
+        for i in line.split(" "):
+            try:
+                arr.append(int(i))
+            except:
+                pass
+        barr.append(list(np.array(arr[::2])[:-1]))
+    return barr
 
 
-records = [[1,2,5],[2,4],[2,3],[1,2,4],[1,3],[2,3],[1,3],[1,2,3,5],[1,2,3]]
-
+records = parse_data("data/Skin.txt")
+# records = [[1,2,5],[2,4],[2,3],[1,2,4],[1,3],[2,3],[1,3],[1,2,3,5],[1,2,3]]
 
 emp  = {}
 
@@ -140,8 +149,6 @@ print (a2)
 
 last = d2
 
-
-
 emp = {**emp,**d2}
 
 while len(last) != 0:
@@ -152,9 +159,4 @@ while len(last) != 0:
     last = upd
     lent += 1
 
-
-
 print (emp)
-
-
-
