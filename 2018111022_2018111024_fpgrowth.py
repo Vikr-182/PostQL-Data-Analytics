@@ -157,19 +157,19 @@ def valid_input_check(df):
     except:
         print("ERROR IN INPUT")
             
-def FPgrowth(df, min_support=0.5, use_colnames=False, max_len=None, verbose=0):
+def FPgrowth(df, min_support=0.5, use_colnames=False, max_len=None, verbose=0, merge=False):
     colname_map = None
     if use_colnames:
         colname_map = {idx: item for idx, item in enumerate(df.columns)}
 
     tree, _ = setup_fptree(df, min_support)
     minsup = math.ceil(min_support * len(df.index))  # min support as count
-    generator = compute_fpg(tree, minsup, colname_map, max_len, verbose)
+    generator = compute_fpg(tree, minsup, colname_map, max_len, verbose,merge)
 
     return generate_itemsets(generator, len(df.index), colname_map)
 
 
-def compute_fpg(tree, minsup, colnames, max_len, verbose):
+def compute_fpg(tree, minsup, colnames, max_len, verbose, merge):
     count = 0
     items = tree.nodes.keys()
     if tree.is_path():
@@ -192,7 +192,7 @@ def compute_fpg(tree, minsup, colnames, max_len, verbose):
     if verbose:
         tree.print_status(count, colnames)
 
-    # Generate conditional trees to generate frequent itemsets one item larger
+    # Generate conditional trees to generate frequent itemsets one item larger and merge based on path:wq
     if not tree.is_path() and (not max_len or max_len > len(tree.cond_items)):
         for item in items:
             cond_tree = tree.conditional_tree(item, minsup)
