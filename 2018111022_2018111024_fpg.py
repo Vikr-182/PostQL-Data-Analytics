@@ -106,24 +106,18 @@ class ConditionedFPTree(object):
         print('\r%d itemset(s) from tree conditioned on items (%s)' %
               (count, cond_items), end="\n")
 
-def setup_fptree(df, min_support):
-    num_itemsets = len(df.index)        # number of itemsets in the database
+def buildFPTree(df, min_support):
+    num_itemsets = len(df.index)
     itemsets = df.values
 
-    # support of each individual item
-    # if itemsets is sparse, np.sum returns an np.matrix of shape (1, N)
     item_support = np.array(np.sum(itemsets, axis=0) / float(num_itemsets))
     item_support = item_support.reshape(-1)
 
     items = np.nonzero(item_support >= min_support)[0]
 
-    # Define ordering on items for inserting into FPTree
     indices = item_support[items].argsort()
     ordering = {item: i for i, item in enumerate(items[indices])}
 
-    # Building tree by inserting itemsets in sorted order
-    # Heuristic for reducing tree size is inserting in order
-    #   of most frequent to least frequent
     tree = ConditionedFPTree(ordering)
     for i in range(num_itemsets):
         nonnull = np.where(itemsets[i, :])[0]
@@ -147,23 +141,13 @@ def generate_itemsets(generator, num_itemsets, colname_map):
             .apply(lambda x: frozenset([colname_map[i] for i in x]))
 
     return res_df
-
-def valid_input_check(df):
-    # Fast path: if all columns are boolean, there is nothing to checks
-    all_bools = df.dtypes.apply(pd.api.types.is_bool_dtype).all()
-    try:
-        if not all_bools:
-            values = df.values
-            idxs = np.where((values != 1) & (values != 0))
-    except:
-        print("ERROR IN INPUT")
             
 def FPgrowth(df, min_support=0.5, use_colnames=False, max_len=None, verbose=0, merge=False):
     colname_map = None
     if use_colnames:
         colname_map = {idx: item for idx, item in enumerate(df.columns)}
 
-    tree, _ = setup_fptree(df, min_support)
+    tree, _ = buildFPTree(df, min_support)
     minsup = math.ceil(min_support * len(df.index))  # min support as count
     generator = compute_fpg(tree, minsup, colname_map, max_len, verbose,merge)
 
@@ -174,8 +158,6 @@ def compute_fpg(tree, minsup, colnames, max_len, verbose, merge=False):
     count = 0
     items = tree.nodes.keys()
     if tree.is_path():
-        # If the tree is a path, we can combinatorally generate all
-        # remaining itemsets without generating additional conditional trees
         size_remain = len(items) + 1
         if max_len:
             size_remain = max_len - len(tree.cond_items) + 1
@@ -193,7 +175,6 @@ def compute_fpg(tree, minsup, colnames, max_len, verbose, merge=False):
     if verbose:
         tree.print_status(count, colnames)
 
-    # Generate conditional trees to generate frequent itemsets one item larger and merge based on path:wq
     if not tree.is_path() and (not max_len or max_len > len(tree.cond_items)):
         for item in items:
             cond_tree = tree.conditional_tree(item, minsup)
