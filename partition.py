@@ -2,7 +2,9 @@
 import itertools
 from collections import defaultdict
 
-thresh = 2
+import numpy as np
+import pandas as pd
+
 
 
 def def_value():
@@ -13,10 +15,35 @@ def split(a, n):
     k, m = divmod(len(a), n)
     return (a[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n))
 
-def iter1(records):
+
+
+def parse_data(file_name):
+
+    file = open(file_name)
+    barr = []
+    for ind, line in enumerate(file):
+        arr = []
+        for i in line.split(" "):
+            try:
+                arr.append(int(i))
+            except:
+                pass
+        #barr.append(list(np.array(arr[::2])[:-1]))
+        barr.append(arr)
+
+    return barr
+
+
+
+
+
+def iter1(records,thresh):
     candidates = defaultdict(def_value)
     final = defaultdict(def_value)
     for i in records:
+
+        i = list(set(i))
+
         for element in i :
             candidates[element] += 1
 
@@ -28,7 +55,7 @@ def iter1(records):
 
 
 
-def iter2(final1,records):
+def iter2(final1,records,thresh):
     candidates = {}
     final = defaultdict(def_value)
     listf = [x[0] for x in final1]
@@ -46,12 +73,16 @@ def iter2(final1,records):
     return final
 
 
-def iterhash(records):
+def iterhash(records,thresh):
     candidates = defaultdict(def_value)
     candidates2 = defaultdict(def_value)
     final = defaultdict(def_value)
     final2 = defaultdict(def_value)
     for i in records:
+
+        i = list(set(i))
+
+
         for element in i :
             candidates[element] += 1
         for element in itertools.combinations(i,2):
@@ -87,7 +118,7 @@ def pruning(currset,prevset,lev):
 
     return newdict 
 
-def itern(n,finalprev,records):
+def itern(n,finalprev,records,thresh):
     
     final = {}
     allnum = sorted(list(set([k for p in finalprev.keys() for k in p])))
@@ -115,33 +146,79 @@ def itern(n,finalprev,records):
 
 
 
-records = [[1,2,5],[2,4],[2,3],[1,2,4],[1,3],[2,3],[1,3],[1,2,3,5],[1,2,3]]
+
+print ("processing data .." )
+records = parse_data("data/Skin.txt")
 
 
-def apriori(records,thresh):
+
+def dic2pd(retdict,tot):
+    newlist = []
+    for i in retdict:
+        newlist.append({'itemset':i,'support':retdict[i]/tot})
+    return pd.DataFrame.from_dict(newlist)
+
+
+
+
+def apriori(records,sup):
     emp  = {}
     lent = 3
-    d1 = iter1(records)
+    thresh = sup*len(records)
+    d1 = iter1(records,thresh)
+
+
     emp = {**emp,**d1}
-
-
-    a1,a2 = iterhash(records)
 
     print ("of length 1")
     print (d1)
-    print (a1)
 
-    d2 = iter2(d1,records)
+    d2 = iter2(d1,records,thresh)
+
+    #a1,a2 = iterhash(records,thresh)
+    #print (a1)
 
     print ("of length 2")
     print (d2)
-    print (a2)
-
+    #print (a2)
     last = d2
+
     emp = {**emp,**d2}
 
     while len(last) != 0:
-        upd = itern(lent,last,records) 
+        upd = itern(lent,last,records,thresh) 
+        print ("of length ",lent)
+        print (upd)
+        emp = {**emp,**upd}
+        last = upd
+        lent += 1
+
+
+    return emp
+
+
+
+def apriori_hash(records,sup):
+    emp  = {}
+    lent = 3
+    thresh = sup*len(records)
+
+    d1,d2 = iterhash(records,thresh)
+    
+    print ("of length 1")
+    print (d1)
+
+
+
+    print ("of length 2")
+    print (d2)
+    last = d2
+
+    emp = {**emp,**d1}
+    emp = {**emp,**d2}
+
+    while len(last) != 0:
+        upd = itern(lent,last,records,thresh) 
         print ("of length ",lent)
         print (upd)
         emp = {**emp,**upd}
@@ -154,9 +231,13 @@ def apriori(records,thresh):
 
 
 
-def partition(records,n):
+
+def partition(records,n,sup):
 
     listorec = list(split(records, n))
+
+    thresh = len(records)*sup
+    
     cand = []
     candkeys = []
     for rec in listorec :
@@ -164,8 +245,9 @@ def partition(records,n):
         print (rec)
         print ("="*30)
 
-        cand.append(apriori(rec,thresh))
-        candkeys += list(apriori(rec,thresh).keys())
+        result = apriori(rec,sup)
+        cand.append(result)
+        candkeys += list(result.keys())
     
     new = []
     for i in candkeys:
@@ -190,19 +272,20 @@ def partition(records,n):
             if set(element).issubset(set(i)):
                 final[element] += 1
 
+
     lol = {}
     for key,value in final.items():
         if value >= thresh:
             lol[key] = value
 
 
-    return lol
+    return dic2pd(lol,len(records))
 
 
 
 
 
-print (partition(records,3))
+print (partition(records,3,0.2))
 
 
 
