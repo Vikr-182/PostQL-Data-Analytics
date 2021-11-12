@@ -11,6 +11,12 @@ import pandas as pd
 def def_value():
     return 0
 
+def split(a, n):
+    k, m = divmod(len(a), n)
+    return (a[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n))
+
+
+
 
 def parse_data(file_name):
 
@@ -56,11 +62,11 @@ def iter2(final1,records,thresh):
     final = defaultdict(def_value)
     listf = [x[0] for x in final1]
     for i in itertools.combinations(listf,2):
-        candidates[i] = 0
+        candidates[tuple(sorted(list(i)))] = 0
 
         for j in records :
             if set(i).issubset(set(j)):
-                candidates[i]+=1
+                candidates[tuple(sorted(list(i)))]+=1
     
     for key,value in candidates.items():
         if value >= thresh:
@@ -82,12 +88,12 @@ def iterhash(records,thresh):
         for element in i :
             candidates[element] += 1
         for element in itertools.combinations(i,2):
-            candidates2[element] += 1
+            candidates2[tuple(sorted(list(element)))] += 1
 
     for key,value in candidates.items():
         if value >= thresh:
             final[(key,)] = value
-
+    
 
     for key,value in candidates2.items():
         if value >= thresh:
@@ -132,7 +138,7 @@ def itern(n,finalprev,records,thresh):
         for j in records :
 
             if set(i).issubset(set(j)):
-                candidates[i] += 1
+                candidates[tuple(sorted(list(i)))] += 1
 
     for key,value in candidates.items():
         if value >= thresh:
@@ -157,6 +163,7 @@ def dic2pd(retdict,tot):
 
 
 def closed_frequent(frequent):
+    #print (frequent)
     #Find Closed frequent itemset
     #Dictionay storing itemset with same support count key
     su = frequent.support.unique()#all unique support count
@@ -197,13 +204,14 @@ def apriori(records,sup):
     emp = {**emp,**d1}
 
     #print ("of length 1")
-    #print (d1)
+    #print (len(d1))
 
     d2 = iter2(d1,records,thresh)
 
 
     #print ("of length 2")
-    #print (a2)
+    #print (d2)
+    #print (len(d2))
     last = d2
 
     emp = {**emp,**d2}
@@ -224,6 +232,47 @@ def apriori(records,sup):
 
 
 
+def aprioripart(records,sup):
+    emp  = {}
+    lent = 3
+    thresh = sup*len(records)
+    d1 = iter1(records,thresh)
+
+
+    emp = {**emp,**d1}
+
+    #print ("of length 1")
+    #print (len(d1))
+
+    d2 = iter2(d1,records,thresh)
+
+
+    #print ("of length 2")
+    #print (d2)
+    #print (len(d2))
+    last = d2
+
+    emp = {**emp,**d2}
+
+    while len(last) != 0:
+        upd = itern(lent,last,records,thresh) 
+        
+        #print ("of length ",lent)
+        #print (upd)
+        emp = {**emp,**upd}
+        last = upd
+        lent += 1
+
+
+
+    #print (emp)
+    return emp
+
+
+
+
+
+
 
 
 
@@ -239,11 +288,13 @@ def apriori_hash(records,sup):
     
     #print ("of length 1")
     #print (d1)
+    #print (len(d1))
 
 
 
     #print ("of length 2")
     #print (d2)
+    #print (len(d2))
     last = d2
 
     emp = {**emp,**d1}
@@ -266,6 +317,62 @@ def apriori_hash(records,sup):
 
 
 
+
+
+def partition(records,n,sup):
+
+    listorec = list(split(records, n))
+
+    thresh = len(records)*sup
+    
+    cand = []
+    candkeys = []
+    for rec in listorec :
+        
+        #print (rec)
+        #print ("="*30)
+
+        result = aprioripart(rec,sup)
+        cand.append(result)
+        candkeys += list(result.keys())
+    
+    new = []
+    for i in candkeys:
+        new.append(frozenset(i))
+    candkeys = set(new)
+
+    """
+    for i in new:
+        if type(i) == type(4):
+            candkeys.append((i,))
+        else :
+            candkeys.append(i)
+    """
+
+    #print ("candkeys ==== ")
+    #print (candkeys)
+    
+    final = defaultdict(def_value)
+
+    for i in records :
+        for element in candkeys:
+            if set(element).issubset(set(i)):
+                final[element] += 1
+
+
+    lol = {}
+    for key,value in final.items():
+        if value >= thresh:
+            lol[key] = value
+
+
+    return closed_frequent(dic2pd(lol,len(records)))
+
+
+
+
+
+
 sthash = time() 
 k= apriori_hash(records,0.2)
 print (k)
@@ -278,8 +385,20 @@ print (k)
 print (len(k))
 en = time()
 
+
+
+stpart = time()
+k = partition(records,3,0.2)
+print (k)
+print (len(k))
+enpart = time ()
+
+
+
+
 print ("time with hashing: ",enhash-sthash)
 print ("time without hashing: ",en-st)
+print ("total time taken with partition ", enpart-stpart)
 
 
 
