@@ -1,5 +1,6 @@
 
 import itertools
+from time import time
 from collections import defaultdict
 
 import numpy as np
@@ -155,7 +156,35 @@ def dic2pd(retdict,tot):
     return pd.DataFrame.from_dict(newlist)
 
 
+def closed_frequent(frequent):
+    #Find Closed frequent itemset
+    #Dictionay storing itemset with same support count key
+    su = frequent.support.unique()#all unique support count
+    fredic = {}
+    for i in range(len(su)):
+        inset = list(frequent.loc[frequent.support ==su[i]]['itemset'])
+        fredic[su[i]] = inset
+    #Dictionay storing itemset with  support count <= key
+    fredic2 = {}
+    for i in range(len(su)):
+        inset2 = list(frequent.loc[frequent.support<=su[i]]['itemset'])
+        fredic2[su[i]] = inset2
 
+    cl = []
+    for index, row in frequent.iterrows():
+        isclose = True
+        cli = row['itemset']
+        cls = row['support']
+        checkset = fredic[cls]
+        for i in checkset:
+            if (cli!=i):
+                if(frozenset.issubset(frozenset(cli),i)):
+                    isclose = False
+                    break
+
+        if(isclose):
+            cl.append(row['itemset'])
+    return cl
 
 
 def apriori(records,sup):
@@ -167,16 +196,13 @@ def apriori(records,sup):
 
     emp = {**emp,**d1}
 
-    print ("of length 1")
-    print (d1)
+    #print ("of length 1")
+    #print (d1)
 
     d2 = iter2(d1,records,thresh)
 
-    #a1,a2 = iterhash(records,thresh)
-    #print (a1)
 
-    print ("of length 2")
-    print (d2)
+    #print ("of length 2")
     #print (a2)
     last = d2
 
@@ -184,16 +210,17 @@ def apriori(records,sup):
 
     while len(last) != 0:
         upd = itern(lent,last,records,thresh) 
-        print ("of length ",lent)
-        print (upd)
+        
+        #print ("of length ",lent)
+        #print (upd)
         emp = {**emp,**upd}
         last = upd
         lent += 1
 
 
 
-    print (emp)
-    return dic2pd(emp,len(records))
+    #print (emp)
+    return closed_frequent(dic2pd(emp,len(records)))
 
 
 
@@ -209,13 +236,14 @@ def apriori_hash(records,sup):
 
     d1,d2 = iterhash(records,thresh)
     
-    print ("of length 1")
-    print (d1)
+    
+    #print ("of length 1")
+    #print (d1)
 
 
 
-    print ("of length 2")
-    print (d2)
+    #print ("of length 2")
+    #print (d2)
     last = d2
 
     emp = {**emp,**d1}
@@ -223,8 +251,8 @@ def apriori_hash(records,sup):
 
     while len(last) != 0:
         upd = itern(lent,last,records,thresh) 
-        print ("of length ",lent)
-        print (upd)
+        #print ("of length ",lent)
+        #print (upd)
         emp = {**emp,**upd}
         last = upd
         lent += 1
@@ -232,12 +260,26 @@ def apriori_hash(records,sup):
 
 
     #print (emp)
-    return dic2pd(emp,len(records))
+    return closed_frequent(dic2pd(emp,len(records)))
 
-#st_hash = 
-print (apriori_hash(records,0.2))
-print (apriori(records,0.2))
 
+
+
+
+sthash = time() 
+k= apriori_hash(records,0.2)
+print (k)
+print (len(k))
+enhash = time()
+
+st = time()
+k= apriori(records,0.2)
+print (k)
+print (len(k))
+en = time()
+
+print ("time with hashing: ",enhash-sthash)
+print ("time without hashing: ",en-st)
 
 
 

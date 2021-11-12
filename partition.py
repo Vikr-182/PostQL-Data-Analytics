@@ -170,16 +170,16 @@ def apriori(records,sup):
 
     emp = {**emp,**d1}
 
-    print ("of length 1")
-    print (d1)
+    #print ("of length 1")
+    #print (d1)
 
     d2 = iter2(d1,records,thresh)
 
     #a1,a2 = iterhash(records,thresh)
     #print (a1)
 
-    print ("of length 2")
-    print (d2)
+    #print ("of length 2")
+    #print (d2)
     #print (a2)
     last = d2
 
@@ -187,8 +187,8 @@ def apriori(records,sup):
 
     while len(last) != 0:
         upd = itern(lent,last,records,thresh) 
-        print ("of length ",lent)
-        print (upd)
+        #print ("of length ",lent)
+        #print (upd)
         emp = {**emp,**upd}
         last = upd
         lent += 1
@@ -205,13 +205,13 @@ def apriori_hash(records,sup):
 
     d1,d2 = iterhash(records,thresh)
     
-    print ("of length 1")
-    print (d1)
+    #print ("of length 1")
+    #print (d1)
 
 
 
-    print ("of length 2")
-    print (d2)
+    #print ("of length 2")
+    #print (d2)
     last = d2
 
     emp = {**emp,**d1}
@@ -219,8 +219,8 @@ def apriori_hash(records,sup):
 
     while len(last) != 0:
         upd = itern(lent,last,records,thresh) 
-        print ("of length ",lent)
-        print (upd)
+        #print ("of length ",lent)
+        #print (upd)
         emp = {**emp,**upd}
         last = upd
         lent += 1
@@ -229,7 +229,35 @@ def apriori_hash(records,sup):
 
     return emp
 
+def closed_frequent(frequent):
+    #Find Closed frequent itemset
+    #Dictionay storing itemset with same support count key
+    su = frequent.support.unique()#all unique support count
+    fredic = {}
+    for i in range(len(su)):
+        inset = list(frequent.loc[frequent.support ==su[i]]['itemset'])
+        fredic[su[i]] = inset
+    #Dictionay storing itemset with  support count <= key
+    fredic2 = {}
+    for i in range(len(su)):
+        inset2 = list(frequent.loc[frequent.support<=su[i]]['itemset'])
+        fredic2[su[i]] = inset2
 
+    cl = []
+    for index, row in frequent.iterrows():
+        isclose = True
+        cli = row['itemset']
+        cls = row['support']
+        checkset = fredic[cls]
+        for i in checkset:
+            if (cli!=i):
+                if(frozenset.issubset(frozenset(cli),i)):
+                    isclose = False
+                    break
+
+        if(isclose):
+            cl.append(row['itemset'])
+    return cl
 
 
 def partition(records,n,sup):
@@ -242,8 +270,8 @@ def partition(records,n,sup):
     candkeys = []
     for rec in listorec :
         
-        print (rec)
-        print ("="*30)
+        #print (rec)
+        #print ("="*30)
 
         result = apriori(rec,sup)
         cand.append(result)
@@ -262,8 +290,8 @@ def partition(records,n,sup):
             candkeys.append(i)
     """
 
-    print ("candkeys ==== ")
-    print (candkeys)
+    #print ("candkeys ==== ")
+    #print (candkeys)
     
     final = defaultdict(def_value)
 
@@ -279,15 +307,20 @@ def partition(records,n,sup):
             lol[key] = value
 
 
-    return dic2pd(lol,len(records))
+    return closed_frequent(dic2pd(lol,len(records)))
 
 
 
 
+from time import time 
 
-print (partition(records,3,0.2))
+st = time()
+k = partition(records,3,0.5)
+print (k)
+print (len(k))
+en = time ()
 
-
+print ("total time taken ", en-st)
 
 
 
